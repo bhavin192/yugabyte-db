@@ -214,6 +214,7 @@ class ControlScript(object):
     # Creates demo database and starts an interactive shell into it. Destroys the sample database
     # after shell quits.
     def demo(self):
+        Output.print_and_log("Inside demo()")
         if self.get_failed_node_processes():
             Output.log_error_and_exit(
                 "{0} is not running. Please run `{0} start` before starting a demo.".format(
@@ -272,6 +273,7 @@ class ControlScript(object):
 
     # Run YSQL shell in target demo database.
     def connect_demo(self):
+        Output.print_and_log("Inside connect_demo()")
         if self.get_failed_node_processes():
             Output.log_error_and_exit(
                 "{0} is not running. Please run `{0} start` before starting a demo.".format(
@@ -294,6 +296,7 @@ class ControlScript(object):
 
     # Destroy target demo database if it exists.
     def destroy_demo(self, signum=None, frame=None):
+        Output.print_and_log("Inside destroy_demo()")
         if self.get_failed_node_processes():
             Output.log_error_and_exit(
                 "{0} is not running. Please run `{0} start` before starting a demo.".format(
