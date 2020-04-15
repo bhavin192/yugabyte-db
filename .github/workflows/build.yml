@@ -20,6 +20,7 @@ on:
 jobs:
   # This workflow contains a single job called "build"
   build:
+    if: false
     runs-on: ${{ matrix.os }}
 
     strategy:

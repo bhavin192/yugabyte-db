@@ -1,0 +1,23 @@
+name: Create Repository Dispatch
+on:
+  push:
+    branches:
+    - new-version-test
+    - master
+  release:
+    types:
+      published
+jobs:
+  createRepositoryDispatch:
+    if: github.event_name == 'release'
+    runs-on: ubuntu-latest
+    steps:
+    - name: "echo text"
+      run: echo "${{github.event_name}}"
+    - name: Repository Dispatch for terraform-gcp-yugabyte
+      uses: peter-evans/repository-dispatch@v1.0.0
+      with:
+        token: ${{ secrets.REPO_ACCESS_TOKEN }}
+        repository: bhavin192/homebrew-yugabytedb
+        event-type: update-on-release
+        client-payload: '{"prerelease": "${{ github.event.release.prerelease }}", "tag": "${{ github.event.release.tag_name }}"}'
