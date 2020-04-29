@@ -97,7 +97,7 @@ If you run into issues associated with `tiller` with Helm 2, you can initialize 
 $ helm init --upgrade --wait
 ```
 
-Tiller, the server-side component for Helm 2, will then be installed into your Kubernetes cluster. By default, Tiller is deployed with an insecure 'allow unauthenticated users' policy. To prevent this, run `helm init` with the `--tiller-tls-verify` flag.For more information on securing your installation see [here](https://docs.helm.sh/using_helm/#securing-your-helm-installation).
+Tiller, the server-side component for Helm 2, will then be installed into your Kubernetes cluster. By default, Tiller is deployed with an insecure 'allow unauthenticated users' policy. To prevent this, run `helm init` with the `--tiller-tls-verify` flag.For more information on securing your installation see [here](https://v2.helm.sh/docs/using_helm/#securing-your-helm-installation).
 
 For Helm 3, you should see something similar to the following output. Note that the `tiller` server side component has been removed in Helm 3.
 ```
