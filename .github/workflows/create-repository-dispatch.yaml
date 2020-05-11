@@ -14,10 +14,17 @@ jobs:
     steps:
     - name: "echo text"
       run: echo "${{github.event_name}}"
-    - name: Repository Dispatch for terraform-gcp-yugabyte
+    - name: Repository Dispatch for homebrew-yugabytedb
       uses: peter-evans/repository-dispatch@v1.0.0
       with:
         token: ${{ secrets.REPO_ACCESS_TOKEN }}
         repository: bhavin192/homebrew-yugabytedb
+        event-type: update-on-release
+        client-payload: '{"prerelease": "${{ github.event.release.prerelease }}", "tag": "${{ github.event.release.tag_name }}"}'
+    - name: Repository Dispatch for yugabyte-operator
+      uses: peter-evans/repository-dispatch@v1.0.0
+      with:
+        token: ${{ secrets.REPO_ACCESS_TOKEN }}
+        repository: bhavin192/yugabyte-operator
         event-type: update-on-release
         client-payload: '{"prerelease": "${{ github.event.release.prerelease }}", "tag": "${{ github.event.release.tag_name }}"}'
