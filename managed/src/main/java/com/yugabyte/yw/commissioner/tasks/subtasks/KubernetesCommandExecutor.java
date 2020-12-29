@@ -168,7 +168,11 @@ public class KubernetesCommandExecutor extends UniverseTaskBase {
     ShellResponse response = null;
     switch (taskParams().commandType) {
       case CREATE_NAMESPACE:
-        response = kubernetesManager.createNamespace(config, taskParams().nodePrefix);
+        // TODO(bhavin192): temporary: disabling the namespace
+        // creation to test things in OCP
+
+        // response = kubernetesManager.createNamespace(config, taskParams().nodePrefix);
+        response = ShellResponse.create(0, "Fake namespace completion, it's not created IRL!! " + taskParams().nodePrefix);
         break;
       case APPLY_SECRET:
         String pullSecret = this.getPullSecret();
