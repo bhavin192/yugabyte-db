@@ -211,7 +211,10 @@ public class KubernetesCommandExecutor extends UniverseTaskBase {
         kubernetesManager.deleteStorage(config, taskParams().namespace);
         break;
       case NAMESPACE_DELETE:
-        kubernetesManager.deleteNamespace(config, taskParams().nodePrefix);
+        // TODO(bhavin192): we should not delete a namespace as it
+        // might have other resources? Already being handled at the
+        // DestroyKubernetesUniverse task. Check for other places.
+        kubernetesManager.deleteNamespace(config, taskParams().namespace);
         break;
       case POD_INFO:
         processNodeInfo();

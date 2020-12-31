@@ -35,6 +35,10 @@ public class KubernetesManager {
     return execCommand(config, commandList);
   }
 
+  // TODO(bhavin192): modify the pullSecret on the fly while applying
+  // it? Add nodeprefix to the name, add labels which make it easy to
+  // find the secret by label selector, and even delete it if
+  // required. Something like, -lprovider=gke1 or -luniverse=uni1.
   public ShellResponse applySecret(Map<String, String> config,
                                                        String universePrefix, String pullSecret) {
     List<String> commandList = ImmutableList.of("kubectl",  "create",
