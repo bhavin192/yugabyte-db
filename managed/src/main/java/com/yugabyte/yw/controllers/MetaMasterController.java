@@ -148,9 +148,12 @@ public class MetaMasterController extends Controller {
 
         Map<String, String> config = entry.getValue();
 
+        // TODO(bhavin192): better to have some function which takes
+        // nodePrefix, azName, and azConfig or KUBENAMESPACE?
         String namespace = isMultiAz ?
             String.format("%s-%s", universeDetails.nodePrefix, azName) :
             universeDetails.nodePrefix;
+        namespace = config.getOrDefault("KUBENAMESPACE", namespace);
 
         ShellResponse r = kubernetesManager.getServiceIPs(
             config, namespace, type == ServerType.MASTER);

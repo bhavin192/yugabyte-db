@@ -52,7 +52,7 @@ public class KubernetesManager {
 
   public ShellResponse helmInstall(Map<String, String> config,
                                                        UUID providerUUID, String universePrefix,
-                                                       String overridesFile) {
+                                                       String namespace, String overridesFile) {
     String helmPackagePath = appConfig.getString("yb.helm.package");
     if (helmPackagePath == null || helmPackagePath.isEmpty()) {
       throw new RuntimeException("Helm Package path not provided.");
@@ -60,16 +60,23 @@ public class KubernetesManager {
     Provider provider = Provider.get(providerUUID);
     Map<String, String> configProvider = provider.getConfig();
     List<String> commandList = ImmutableList.of("helm",  "install", universePrefix,
-        helmPackagePath, "--namespace", universePrefix, "-f", overridesFile,
+        helmPackagePath, "--namespace", namespace, "-f", overridesFile,
         "--timeout", getTimeout(), "--wait");
     LOG.info(String.join(" ", commandList));
     return execCommand(config, commandList);
   }
 
+  // TODO(bhavin192): get rid of this.
   public ShellResponse getPodInfos(Map<String, String> config,
-                                                       String universePrefix) {
+                                   String universePrefix) {
+    return getPodInfos(config, universePrefix, universePrefix);
+  }
+
+  public ShellResponse getPodInfos(Map<String, String> config,
+                                   String universePrefix,
+                                   String namespace) {
     List<String> commandList = ImmutableList.of("kubectl",  "get", "pods", "--namespace",
-        universePrefix, "-o", "json", "-l", "release=" + universePrefix);
+        namespace, "-o", "json", "-l", "release=" + universePrefix);
     return execCommand(config, commandList);
   }
 
@@ -98,13 +105,14 @@ public class KubernetesManager {
 
   public ShellResponse helmUpgrade(Map<String, String> config,
                                                        String universePrefix,
+                                                       String namespace,
                                                        String overridesFile) {
     String helmPackagePath = appConfig.getString("yb.helm.package");
     if (helmPackagePath == null || helmPackagePath.isEmpty()) {
       throw new RuntimeException("Helm Package path not provided.");
     }
     List<String> commandList = ImmutableList.of("helm",  "upgrade",  universePrefix,
-        helmPackagePath, "-f", overridesFile, "--namespace", universePrefix,
+        helmPackagePath, "-f", overridesFile, "--namespace", namespace,
         "--timeout", getTimeout(), "--wait");
     LOG.info(String.join(" ", commandList));
     return execCommand(config, commandList);
@@ -118,9 +126,10 @@ public class KubernetesManager {
   }
 
   public ShellResponse helmDelete(Map<String, String> config,
-                                                      String universePrefix) {
+                                                      String universePrefix,
+                                                      String namespace) {
     List<String> commandList = ImmutableList.of("helm",  "delete", universePrefix,
-        "-n", universePrefix);
+        "-n", namespace);
     return execCommand(config, commandList);
   }
 

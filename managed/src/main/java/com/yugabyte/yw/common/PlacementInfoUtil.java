@@ -1718,6 +1718,11 @@ public class PlacementInfoUtil {
       ));
   }
 
+  // TODO(bhavin192): there should be proper merging of the
+  // configuration from all the levels. Something like storage class
+  // from AZ level, kubeconfig from global level, namespace from
+  // region level and so on.
+
   // Get the zones with the kubeconfig for that zone.
   public static Map<UUID, Map<String, String>> getConfigPerAZ(PlacementInfo pi) {
     Map<UUID, Map<String, String>> azToConfig = new HashMap<>();
@@ -1787,6 +1792,8 @@ public class PlacementInfoUtil {
       AvailabilityZone az = AvailabilityZone.get(entry.getKey());
       String domain = azToDomain.get(entry.getKey());
       for (int idx = 0; idx < entry.getValue(); idx++) {
+        // TODO(bhavin192): account for the KUBENAMESPACE which is
+        // available at the az level.
         String master = String.format("yb-master-%d.yb-masters.%s-%s.%s:%d", idx, nodePrefix, az.code,
             domain, masterRpcPort);
         masters.add(master);

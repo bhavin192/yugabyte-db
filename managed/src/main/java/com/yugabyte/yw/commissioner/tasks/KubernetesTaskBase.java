@@ -154,9 +154,11 @@ public abstract class KubernetesTaskBase extends UniverseDefinitionTaskBase {
             KubernetesCheckNumPod.CommandType.WAIT_FOR_PODS, azCode, config,
             podsToWaitFor));
       } else {
-        // Create the namespaces of the deployment.
-        createNamespaces.addTask(createKubernetesExecutorTask(
-            KubernetesCommandExecutor.CommandType.CREATE_NAMESPACE, azCode, config));
+        if (config.get("KUBENAMESPACE") == null) {
+          // Create the namespaces of the deployment.
+          createNamespaces.addTask(createKubernetesExecutorTask(
+              KubernetesCommandExecutor.CommandType.CREATE_NAMESPACE, azCode, config));
+        }
 
         // Apply the necessary pull secret to each namespace.
         applySecrets.addTask(createKubernetesExecutorTask(
@@ -416,9 +418,17 @@ public abstract class KubernetesTaskBase extends UniverseDefinitionTaskBase {
     params.commandType = commandType;
     params.nodePrefix = taskParams().nodePrefix;
     params.universeUUID = taskParams().universeUUID;
+    // TODO(bhavin192): should not be here, as it is not necessary
+    // that the config we get here is always going to be an az config.
+    params.namespace = config.get("KUBENAMESPACE");
 
+    // TODO(bhavin192): can we just assume that when we have given az,
+    // the config is an az config?
     if (az != null) {
       params.nodePrefix = String.format("%s-%s", params.nodePrefix, az);
+    }
+    if (params.namespace == null) {
+      params.namespace = params.nodePrefix;
     }
     if (masterAddresses != null) {
       params.masterAddresses = masterAddresses;
@@ -471,6 +481,8 @@ public abstract class KubernetesTaskBase extends UniverseDefinitionTaskBase {
     params.commandType = commandType;
     params.nodePrefix = taskParams().nodePrefix;
     params.universeUUID = taskParams().universeUUID;
+
+    // TODO(bhavin192): set the namespace param based on config's value.
 
     if (az != null) {
       params.nodePrefix = String.format("%s-%s", params.nodePrefix, az);
