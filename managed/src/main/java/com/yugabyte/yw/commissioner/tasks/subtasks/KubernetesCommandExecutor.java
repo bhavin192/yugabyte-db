@@ -165,18 +165,15 @@ public class KubernetesCommandExecutor extends UniverseTaskBase {
     if (config == null) {
       config = Provider.get(taskParams().providerUUID).getConfig();
     }
-    // TOOD(bhavin192): except POD_INFO we must have
-    // taskParams.namespace set.
+    if (taskParams().commandType != CommandType.POD_INFO && taskParams().namespace == null) {
+      throw new IllegalArgumentException("namespace can be null only in case of POD_INFO");
+    }
 
     // TODO: add checks for the shell process handler return values.
     ShellResponse response = null;
     switch (taskParams().commandType) {
       case CREATE_NAMESPACE:
-        // TODO(bhavin192): temporary: disabling the namespace
-        // creation to test things in OCP
-
-        // response = kubernetesManager.createNamespace(config, taskParams().nodePrefix);
-        response = ShellResponse.create(0, "Fake namespace completion, it's not created IRL!! " + taskParams().nodePrefix);
+        response = kubernetesManager.createNamespace(config, taskParams().namespace);
         break;
       case APPLY_SECRET:
         String pullSecret = this.getPullSecret();
@@ -211,9 +208,6 @@ public class KubernetesCommandExecutor extends UniverseTaskBase {
         kubernetesManager.deleteStorage(config, taskParams().namespace);
         break;
       case NAMESPACE_DELETE:
-        // TODO(bhavin192): we should not delete a namespace as it
-        // might have other resources? Already being handled at the
-        // DestroyKubernetesUniverse task. Check for other places.
         kubernetesManager.deleteNamespace(config, taskParams().namespace);
         break;
       case POD_INFO:
@@ -311,11 +305,9 @@ public class KubernetesCommandExecutor extends UniverseTaskBase {
       String regionName = AvailabilityZone.get(azUUID).region.code;
       Map<String, String> config = entry.getValue();
 
-      // TODO(bhavin192): better to have some function which takes
-      // nodePrefix, azName, and azConfig or KUBENAMESPACE?
       String nodePrefix = isMultiAz ?
           String.format("%s-%s", taskParams().nodePrefix, azName) : taskParams().nodePrefix;
-      String namespace = config.getOrDefault("KUBENAMESPACE", nodePrefix);
+      String namespace = PlacementInfoUtil.getKubernetesNamespace(isMultiAz, taskParams().nodePrefix, azName, config);
 
       ShellResponse podResponse =
           kubernetesManager.getPodInfos(config, nodePrefix, namespace);
@@ -335,8 +327,8 @@ public class KubernetesCommandExecutor extends UniverseTaskBase {
         // the hostname of the pod in case of multi-az.
 
         // TODO(bhavin192): can be simplified if we have pod names
-        // with release name in them. But will still be required to be
-        // kept for backwards compatibility.
+        // with release name in them. But it will still be required to
+        // be kept for backwards compatibility.
         String podName = isMultiAz ?
             String.format("%s_%s", podSpec.path("hostname").asText(), azName) :
             podSpec.path("hostname").asText();

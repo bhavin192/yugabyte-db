@@ -1748,14 +1748,40 @@ public class PlacementInfoUtil {
     return azToConfig;
   }
 
-  // TODO(bhavin192): account for the KUBENAMESPACE az level config.
-  public static String getKubernetesNamespace(String nodePrefix, String azName) {
-    return String.format("%s-%s", nodePrefix, azName);
+  public static String getKubernetesNamespace(String nodePrefix,
+                                              String azName, Map<String, String> azConfig) {
+    boolean isMultiAZ = azName == null ? false : true;
+    return getKubernetesNamespace(isMultiAZ, nodePrefix, azName, azConfig);
   }
 
-  // TODO(bhavin192): account for the KUBENAMESPACE az level config.
-  // TODO(bhavin192): might need to update callers of this function,
-  // so that they accound for KUBENAMESPACE.
+  // TODO(bhavin192): remove one of the implementation.
+  // public static String getKubernetesNamespace(Bool isMultiAZ, String nodePrefix,
+  //                                             String azName, Map<String, String> azConfig) {
+  //   String namespace = azConfig.get("KUBENAMESPACE");
+  //   if (namespace != null) {
+  // 	return namespace;
+  //   }
+
+  //   return isMultiAZ ? String.format("%s-%s", nodePrefix, azName) : nodePrefix;
+  // }
+
+  /**
+   * This function returns the namespace for the given AZ. If the AZ
+   * config has KUBENAMESPACE defined, then it is used
+   * directly. Otherwise, the namespace is constructed with nodePrefix
+   * & azName params.
+   */
+  public static String getKubernetesNamespace(boolean isMultiAZ, String nodePrefix,
+                                              String azName, Map<String, String> azConfig) {
+    String namespace = isMultiAZ ? String.format("%s-%s", nodePrefix, azName) : nodePrefix;
+    return azConfig.getOrDefault("KUBENAMESPACE", namespace);
+  }
+
+  // TODO(bhavin192): what if same namespace is being used for
+  // different azs? we need to have something like ns_az to make sure
+  // that the configuration is correct. This is eventually used by
+  // bin/yb_backup.py and bin/cluster_health.py. Those will need an
+  // update as well.
   public static Map<String, String> getConfigPerNamespace(
     PlacementInfo pi,
     String nodePrefix,
@@ -1763,29 +1789,18 @@ public class PlacementInfoUtil {
   ) {
     Map<String, String> namespaceToConfig = new HashMap<>();
     Map<UUID, Map<String, String>> azToConfig = getConfigPerAZ(pi);
+    boolean isMultiAZ = isMultiAZ(provider);
     for (Entry<UUID, Map<String, String>> entry : azToConfig.entrySet()) {
       String kubeconfig = entry.getValue().get("KUBECONFIG");
       if (kubeconfig == null) {
         throw new NullPointerException("Couldn't find a kubeconfig");
       }
-      if (!isMultiAZ(provider)) {
-        // TODO(bhavin192): get rid of this hack.
-        String ns = entry.getValue().get("KUBENAMESPACE");
-        if (ns == null) {
-          namespaceToConfig.put(nodePrefix, kubeconfig);
-        } else {
-          namespaceToConfig.put(ns, kubeconfig);
-        }
-        break;
-      } else {
-        String azName = AvailabilityZone.get(entry.getKey()).code;
-        // TODO(bhavin192): account for the KUBENAMESPACE az level
-        // config.
 
-        // TODO(bhavin192): temporary fix.
-        String namespace = getKubernetesNamespace(nodePrefix, azName);
-        namespace = entry.getValue().getOrDefault("KUBENAMESPACE", namespace);
-        namespaceToConfig.put(namespace, kubeconfig);
+      String azName = AvailabilityZone.get(entry.getKey()).code;
+      String namespace = getKubernetesNamespace(isMultiAZ, nodePrefix, azName, entry.getValue());
+      namespaceToConfig.put(namespace, kubeconfig);
+      if (!isMultiAZ) {
+        break;
       }
     }
 
@@ -1799,16 +1814,14 @@ public class PlacementInfoUtil {
                                               int masterRpcPort) {
     List<String> masters = new ArrayList<String>();
     Map<UUID, String> azToDomain = getDomainPerAZ(pi);
-    if (!isMultiAZ(provider)) {
+    boolean isMultiAZ = isMultiAZ(provider);
+    if (!isMultiAZ) {
       return null;
     }
 
     for (Entry<UUID, Integer> entry : azToNumMasters.entrySet()) {
       AvailabilityZone az = AvailabilityZone.get(entry.getKey());
-      // TODO(bhavin192): better to have some function which takes
-      // nodePrefix, azName, and azConfig or KUBENAMESPACE?
-      String namespace = String.format("%s-%s", nodePrefix, az.code);
-      namespace = az.getConfig().getOrDefault("KUBENAMESPACE", namespace);
+      String namespace = getKubernetesNamespace(isMultiAZ, nodePrefix, az.code, az.getConfig());
       String domain = azToDomain.get(entry.getKey());
       for (int idx = 0; idx < entry.getValue(); idx++) {
         // TODO(bhavin192): might need to change when we have multiple

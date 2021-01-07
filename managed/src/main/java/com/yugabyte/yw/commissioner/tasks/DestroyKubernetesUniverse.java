@@ -97,10 +97,11 @@ public class DestroyKubernetesUniverse extends DestroyUniverse {
         // We depend on the fact that, deleting the namespace will
         // delete the pull secret as well as the volumes. That won't
         // be the case with providers which have KUBENAMESPACE
-        // paramter at az level in them.
+        // paramter in the AZ config. We don't delete the namespace,
+        // as it is not created by us.
         if (namespace != null) {
           // Delete the PVCs created for this az.
-	  volumeDeletes.addTask(createDestroyKubernetesTask(
+          volumeDeletes.addTask(createDestroyKubernetesTask(
               universe.getUniverseDetails().nodePrefix, azName, config,
               KubernetesCommandExecutor.CommandType.VOLUME_DELETE,
               providerUUID));
@@ -153,22 +154,15 @@ public class DestroyKubernetesUniverse extends DestroyUniverse {
     params.commandType = commandType;
     params.nodePrefix = nodePrefix;
     params.providerUUID = providerUUID;
-    // TODO(bhavin192): should not be here, as it is not necessary
-    // that the config we get here is always going to be an az config,
-    // though it is true in this particular case.
-    params.namespace = config.get("KUBENAMESPACE");
-
-    // TODO(bhavin192): can we just assume that when we have given az,
-    // the config is an az config? In this case all the callers just
-    // pass the az config only.
     if (az != null) {
       params.nodePrefix = String.format("%s-%s", nodePrefix, az);  
     }
-    if (params.namespace == null) {
-      params.namespace = params.nodePrefix;
-    }
     if (config != null) {
       params.config = config;
+      // This assumes that the config is az config. It is true in this
+      // particular case, all callers just pass az config.
+      // params.namespace remains null if config is not passed.
+      params.namespace = PlacementInfoUtil.getKubernetesNamespace(nodePrefix, az, config);
     }
     params.universeUUID = taskParams().universeUUID;
     KubernetesCommandExecutor task = new KubernetesCommandExecutor();
