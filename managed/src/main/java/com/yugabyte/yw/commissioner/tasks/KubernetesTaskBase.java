@@ -154,6 +154,9 @@ public abstract class KubernetesTaskBase extends UniverseDefinitionTaskBase {
             KubernetesCheckNumPod.CommandType.WAIT_FOR_PODS, azCode, config,
             podsToWaitFor));
       } else {
+        // TODO(bhavin192): what if the namespace does not exist? It
+        // is better to keep that to user, as we might not have access
+        // to even list and or create the ns in same cases.
         if (config.get("KUBENAMESPACE") == null) {
           // Create the namespaces of the deployment.
           createNamespaces.addTask(createKubernetesExecutorTask(
@@ -243,6 +246,8 @@ public abstract class KubernetesTaskBase extends UniverseDefinitionTaskBase {
         createSingleKubernetesExecutorTaskForServerType(CommandType.HELM_UPGRADE,
             tempPI, azCode, masterAddresses, softwareVersion, serverType, config,
             masterPartition, tserverPartition);
+        // TODO(bhavin192): might need to account for multiple
+        // releases in one namespace.
         String podName = String.format("%s-%d", sType, partition);
         createKubernetesWaitForPodTask(KubernetesWaitForPod.CommandType.WAIT_FOR_POD,
             podName, azCode, config);
@@ -320,9 +325,13 @@ public abstract class KubernetesTaskBase extends UniverseDefinitionTaskBase {
         volumeDeletes.addTask(createKubernetesExecutorTask(
             KubernetesCommandExecutor.CommandType.VOLUME_DELETE, azCode, config));
 
-        // Delete the namespaces of the deployments.
-        namespaceDeletes.addTask(createKubernetesExecutorTask(
-            KubernetesCommandExecutor.CommandType.NAMESPACE_DELETE, azCode, config));
+        // TODO(bhavin192): assuming that if the namespace is given,
+        // we don't delete it.
+        if (config.get("KUBENAMESPACE") == null) {
+          // Delete the namespaces of the deployments.
+          namespaceDeletes.addTask(createKubernetesExecutorTask(
+              KubernetesCommandExecutor.CommandType.NAMESPACE_DELETE, azCode, config));
+        }
       }
     }
     subTaskGroupQueue.add(helmDeletes);
@@ -482,8 +491,6 @@ public abstract class KubernetesTaskBase extends UniverseDefinitionTaskBase {
     params.nodePrefix = taskParams().nodePrefix;
     params.universeUUID = taskParams().universeUUID;
 
-    // TODO(bhavin192): set the namespace param based on config's value.
-
     if (az != null) {
       params.nodePrefix = String.format("%s-%s", params.nodePrefix, az);
     }
@@ -498,6 +505,10 @@ public abstract class KubernetesTaskBase extends UniverseDefinitionTaskBase {
     }
     if (config != null) {
       params.config = config;
+      // TODO(bhavin192): replicate the same logic everywhere else?
+      // This assumes that the config is az config.
+      // params.namespace is null if config is not passed.
+      params.namespace = config.getOrDefault("KUBENAMESPACE", params.nodePrefix);
     }
     params.masterPartition = masterPartition;
     params.tserverPartition = tserverPartition;
@@ -521,8 +532,18 @@ public abstract class KubernetesTaskBase extends UniverseDefinitionTaskBase {
     params.providerUUID = UUID.fromString(primary.userIntent.provider);
     params.commandType = commandType;
     params.nodePrefix = taskParams().nodePrefix;
+    // TODO(bhavin192): should not be here, as it is not necessary
+    // that the config we get here is always going to be an az config.
+    params.namespace = config.get("KUBENAMESPACE");
+
+    // TODO(bhavin192): can we just assume that when we have given az,
+    // the config is an az config? In this particular case all the
+    // callers of this function pass on an az config.
     if (az != null) {
       params.nodePrefix = String.format("%s-%s", params.nodePrefix, az);
+    }
+    if (params.namespace == null) {
+      params.namespace = params.nodePrefix;
     }
     if (config != null) {
       params.config = config;
@@ -549,6 +570,10 @@ public abstract class KubernetesTaskBase extends UniverseDefinitionTaskBase {
     }
     if (config != null) {
       params.config = config;
+      // TODO(bhavin192): replicate the same logic everywhere else?
+      // This assumes that the config is az config.
+      // params.namespace is null if config is not passed.
+      params.namespace = config.getOrDefault("KUBENAMESPACE", params.nodePrefix);
     }
     params.universeUUID = taskParams().universeUUID;
     params.podNum = numPods;

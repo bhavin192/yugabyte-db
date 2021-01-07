@@ -1748,10 +1748,14 @@ public class PlacementInfoUtil {
     return azToConfig;
   }
 
+  // TODO(bhavin192): account for the KUBENAMESPACE az level config.
   public static String getKubernetesNamespace(String nodePrefix, String azName) {
     return String.format("%s-%s", nodePrefix, azName);
   }
 
+  // TODO(bhavin192): account for the KUBENAMESPACE az level config.
+  // TODO(bhavin192): might need to update callers of this function,
+  // so that they accound for KUBENAMESPACE.
   public static Map<String, String> getConfigPerNamespace(
     PlacementInfo pi,
     String nodePrefix,
@@ -1765,11 +1769,22 @@ public class PlacementInfoUtil {
         throw new NullPointerException("Couldn't find a kubeconfig");
       }
       if (!isMultiAZ(provider)) {
-        namespaceToConfig.put(nodePrefix, kubeconfig);
+        // TODO(bhavin192): get rid of this hack.
+        String ns = entry.getValue().get("KUBENAMESPACE");
+        if (ns == null) {
+          namespaceToConfig.put(nodePrefix, kubeconfig);
+        } else {
+          namespaceToConfig.put(ns, kubeconfig);
+        }
         break;
       } else {
         String azName = AvailabilityZone.get(entry.getKey()).code;
+        // TODO(bhavin192): account for the KUBENAMESPACE az level
+        // config.
+
+        // TODO(bhavin192): temporary fix.
         String namespace = getKubernetesNamespace(nodePrefix, azName);
+        namespace = entry.getValue().getOrDefault("KUBENAMESPACE", namespace);
         namespaceToConfig.put(namespace, kubeconfig);
       }
     }
@@ -1790,11 +1805,15 @@ public class PlacementInfoUtil {
 
     for (Entry<UUID, Integer> entry : azToNumMasters.entrySet()) {
       AvailabilityZone az = AvailabilityZone.get(entry.getKey());
+      // TODO(bhavin192): better to have some function which takes
+      // nodePrefix, azName, and azConfig or KUBENAMESPACE?
+      String namespace = String.format("%s-%s", nodePrefix, az.code);
+      namespace = az.getConfig().getOrDefault("KUBENAMESPACE", namespace);
       String domain = azToDomain.get(entry.getKey());
       for (int idx = 0; idx < entry.getValue(); idx++) {
-        // TODO(bhavin192): account for the KUBENAMESPACE which is
-        // available at the az level.
-        String master = String.format("yb-master-%d.yb-masters.%s-%s.%s:%d", idx, nodePrefix, az.code,
+        // TODO(bhavin192): might need to change when we have multiple
+        // releases in one namespace.
+        String master = String.format("yb-master-%d.yb-masters.%s.%s:%d", idx, namespace,
             domain, masterRpcPort);
         masters.add(master);
       }

@@ -313,16 +313,12 @@ public class KubernetesCommandExecutor extends UniverseTaskBase {
 
       // TODO(bhavin192): better to have some function which takes
       // nodePrefix, azName, and azConfig or KUBENAMESPACE?
-      String namespace = isMultiAz ?
+      String nodePrefix = isMultiAz ?
           String.format("%s-%s", taskParams().nodePrefix, azName) : taskParams().nodePrefix;
-      namespace = config.getOrDefault("KUBENAMESPACE", namespace);
+      String namespace = config.getOrDefault("KUBENAMESPACE", nodePrefix);
 
-      // TODO(bhavin192): shouldn't this fail? Because it assumes that
-      // the nodePrefix (without az name in this case) is the release
-      // name. While the HELM_INSTALL task takes the nodePrefix with
-      // az name in it as release name.
       ShellResponse podResponse =
-          kubernetesManager.getPodInfos(config, taskParams().nodePrefix, namespace);
+          kubernetesManager.getPodInfos(config, nodePrefix, namespace);
       JsonNode podInfos = parseShellResponseAsJson(podResponse);
 
       for (JsonNode podInfo: podInfos.path("items")) {

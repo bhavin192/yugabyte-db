@@ -70,11 +70,6 @@ public class KubernetesManager {
     return execCommand(config, commandList);
   }
 
-  // TODO(bhavin192): get rid of this.
-  public ShellResponse getPodInfos(Map<String, String> config,
-                                   String universePrefix) {
-    return getPodInfos(config, universePrefix, universePrefix);
-  }
 
   public ShellResponse getPodInfos(Map<String, String> config,
                                    String universePrefix,
