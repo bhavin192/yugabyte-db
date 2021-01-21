@@ -117,22 +117,39 @@ public class DestroyKubernetesUniverseTest extends CommissionerBaseTest {
   );
 
   private void assertTaskSequence(Map<Integer, List<TaskInfo>> subTasksByPosition, int numTasks) {
+    assertTaskSequence(subTasksByPosition, numTasks, numTasks);
+  }
+
+  private void assertTaskSequence(Map<Integer, List<TaskInfo>> subTasksByPosition, int numTasks,
+                                 int numNamespaceDelete) {
     int position = 0;
+    int numVolumeDelete = numTasks - numNamespaceDelete;
     for (TaskType taskType: KUBERNETES_DESTROY_UNIVERSE_TASKS) {
+      JsonNode expectedResults =
+          KUBERNETES_DESTROY_UNIVERSE_EXPECTED_RESULTS.get(position);
       List<TaskInfo> tasks = subTasksByPosition.get(position);
-      if (taskType != TaskType.RemoveUniverseEntry &&
-          taskType != TaskType.SwamperTargetsFileUpdate &&
-          taskType != TaskType.DestroyEncryptionAtRest) {
-	  System.out.println("numTasks: " + numTasks + " size: " + tasks.size());
+      if (expectedResults.equals(
+          Json.toJson(ImmutableMap.of("commandType", NAMESPACE_DELETE.name())))) {
+        if (numNamespaceDelete == 0) {
+          position++;
+          continue;
+        }
+        assertEquals(numNamespaceDelete, tasks.size());
+      } else if (expectedResults.equals(
+          Json.toJson(ImmutableMap.of("commandType", VOLUME_DELETE.name())))) {
+        if (numVolumeDelete == 0) {
+          position++;
+          continue;
+        }
+      } else if (taskType != TaskType.RemoveUniverseEntry &&
+                 taskType != TaskType.SwamperTargetsFileUpdate &&
+                 taskType != TaskType.DestroyEncryptionAtRest) {
         assertEquals(numTasks, tasks.size());
       } else {
         assertEquals(1, tasks.size());
       }
 
-      System.out.println("tasks: " + tasks.toString());
       assertEquals(taskType, tasks.get(0).getTaskType());
-      JsonNode expectedResults =
-          KUBERNETES_DESTROY_UNIVERSE_EXPECTED_RESULTS.get(position);
       List<JsonNode> taskDetails = tasks.stream()
           .map(t -> t.getTaskDetails())
           .collect(Collectors.toList());
