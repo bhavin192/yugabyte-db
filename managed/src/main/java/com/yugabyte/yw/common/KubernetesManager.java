@@ -79,6 +79,8 @@ public class KubernetesManager {
     return execCommand(config, commandList);
   }
 
+  // TODO(bhavin192): do we need to update this? It is being used by
+  // Helmlegacy as of now.
   public ShellResponse getServices(Map<String, String> config,
                                                        String universePrefix) {
     List<String> commandList = ImmutableList.of("kubectl",  "get", "services", "--namespace",

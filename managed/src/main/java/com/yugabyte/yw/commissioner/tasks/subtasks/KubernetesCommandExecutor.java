@@ -272,6 +272,8 @@ public class KubernetesCommandExecutor extends UniverseTaskBase {
       String regionName = AvailabilityZone.get(azUUID).region.code;
       Map<String, String> config = entry.getValue();
 
+      // TODO(bhavin192): should be updated? Used by the Helmlegacy
+      // override.
       String namespace = taskParams().nodePrefix;
 
       ShellResponse svcResponse =
@@ -319,6 +321,7 @@ public class KubernetesCommandExecutor extends UniverseTaskBase {
         JsonNode podSpec = podInfo.path("spec");
         pod.put("startTime", statusNode.path("startTime").asText());
         pod.put("status", statusNode.path("phase").asText());
+	// TODO(bhavin192): check if the namespace is blank
         pod.put("namespace", podInfo.path("metadata").path("namespace").asText());
         pod.put("az_uuid", azUUID.toString());
         pod.put("az_name", azName);
