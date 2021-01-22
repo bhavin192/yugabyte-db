@@ -968,7 +968,7 @@ public class KubernetesCommandExecutorTest extends SubTaskBaseTest {
     ShellResponse shellResponse2 =
         ShellResponse.create(0, String.format(podInfosMessage, ns2));
     when(kubernetesManager.getPodInfos(any(), eq(nodePrefix2), eq(ns2))).thenReturn(shellResponse2);
-    ShellResponse shellResponse3 = 
+    ShellResponse shellResponse3 =
         ShellResponse.create(0, String.format(podInfosMessage, ns3));
     when(kubernetesManager.getPodInfos(any(), eq(nodePrefix3), eq(ns3))).thenReturn(shellResponse3);
 
