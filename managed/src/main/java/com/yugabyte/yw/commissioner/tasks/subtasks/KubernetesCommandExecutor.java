@@ -321,8 +321,6 @@ public class KubernetesCommandExecutor extends UniverseTaskBase {
         JsonNode podSpec = podInfo.path("spec");
         pod.put("startTime", statusNode.path("startTime").asText());
         pod.put("status", statusNode.path("phase").asText());
-	// TODO(bhavin192): check if the namespace is blank
-        pod.put("namespace", podInfo.path("metadata").path("namespace").asText());
         pod.put("az_uuid", azUUID.toString());
         pod.put("az_name", azName);
         pod.put("region_name", regionName);
@@ -335,6 +333,12 @@ public class KubernetesCommandExecutor extends UniverseTaskBase {
         String podName = isMultiAz ?
             String.format("%s_%s", podSpec.path("hostname").asText(), azName) :
             podSpec.path("hostname").asText();
+        String podNamespace = podInfo.path("metadata").path("namespace").asText();
+        if (podNamespace.isEmpty() || podNamespace == null) {
+          throw new IllegalArgumentException("metadata.namespace of pod " + podName
+                                             + " is empty. This shouldn't happen");
+        }
+        pod.put("namespace", podNamespace);
         pods.set(podName, pod);
       }
     }
