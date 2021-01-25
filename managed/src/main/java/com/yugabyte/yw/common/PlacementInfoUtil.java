@@ -1754,17 +1754,6 @@ public class PlacementInfoUtil {
     return getKubernetesNamespace(isMultiAZ, nodePrefix, azName, azConfig);
   }
 
-  // TODO(bhavin192): remove one of the implementation.
-  // public static String getKubernetesNamespace(Bool isMultiAZ, String nodePrefix,
-  //                                             String azName, Map<String, String> azConfig) {
-  //   String namespace = azConfig.get("KUBENAMESPACE");
-  //   if (namespace != null) {
-  // 	return namespace;
-  //   }
-
-  //   return isMultiAZ ? String.format("%s-%s", nodePrefix, azName) : nodePrefix;
-  // }
-
   /**
    * This function returns the namespace for the given AZ. If the AZ
    * config has KUBENAMESPACE defined, then it is used

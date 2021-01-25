@@ -101,12 +101,9 @@ public class KubernetesCommandExecutorTest extends SubTaskBaseTest {
     super.setUp();
     // TODO(bhavin192): shouldn't this be a Kubernetes provider?
     defaultProvider = ModelFactory.awsProvider(defaultCustomer);
-    config.put("KUBECONFIG", "test");
-    // TODO(bhavin192): causes issues with podInfo test.
-    // defaultProvider.setConfig(config);
-    defaultProvider.save();
     defaultRegion = Region.create(defaultProvider, "region-1", "PlacementRegion 1", "default-image");
     defaultAZ = AvailabilityZone.create(defaultRegion, "az-1", "PlacementAZ 1", "subnet-1");
+    config.put("KUBECONFIG", "test");
     defaultAZ.setConfig(config);
     defaultUniverse = ModelFactory.createUniverse(defaultCustomer.getCustomerId());
     defaultUniverse = updateUniverseDetails("small");
@@ -692,56 +689,6 @@ public class KubernetesCommandExecutorTest extends SubTaskBaseTest {
         .deleteNamespace(config, namespace);
   }
 
-  // TODO(bhavin192): remove this.
-  // @Test
-  // public void testPodInfo() {
-  //   String nodePrefix = defaultUniverse.getUniverseDetails().nodePrefix;
-  //   ShellResponse shellResponse = new ShellResponse();
-  //   shellResponse.message =
-  //       "{\"items\": [{\"status\": {\"startTime\": \"1234\", \"phase\": \"Running\"," +
-  //           " \"podIP\": \"123.456.78.90\"}, \"spec\": {\"hostname\": \"yb-master-0\"}," +
-  //           " \"metadata\": {\"namespace\": \"" + nodePrefix + "\"}}," +
-  //       "{\"status\": {\"startTime\": \"1234\", \"phase\": \"Running\", " +
-  //           "\"podIP\": \"123.456.78.91\"}, \"spec\": {\"hostname\": \"yb-tserver-0\"}," +
-  //           " \"metadata\": {\"namespace\": \"" + nodePrefix + "\"}}," +
-  //       "{\"status\": {\"startTime\": \"1234\", \"phase\": \"Running\", " +
-  //           "\"podIP\": \"123.456.78.92\"}, \"spec\": {\"hostname\": \"yb-master-1\"}," +
-  //           " \"metadata\": {\"namespace\": \"" + nodePrefix + "\"}}," +
-  //       "{\"status\": {\"startTime\": \"1234\", \"phase\": \"Running\"," +
-  //           " \"podIP\": \"123.456.78.93\"}, \"spec\": {\"hostname\": \"yb-tserver-1\"}," +
-  //           " \"metadata\": {\"namespace\": \"" + nodePrefix + "\"}}," +
-  //       "{\"status\": {\"startTime\": \"1234\", \"phase\": \"Running\", " +
-  //           "\"podIP\": \"123.456.78.94\"}, \"spec\": {\"hostname\": \"yb-master-2\"}," +
-  //           " \"metadata\": {\"namespace\": \"" + nodePrefix + "\"}}," +
-  //       "{\"status\": {\"startTime\": \"1234\", \"phase\": \"Running\", " +
-  //           "\"podIP\": \"123.456.78.95\"}, \"spec\": {\"hostname\": \"yb-tserver-2\"}," +
-  //           " \"metadata\": {\"namespace\": \"" + nodePrefix + "\"}}]}";
-  //   when(kubernetesManager.getPodInfos(any(), any(), any())).thenReturn(shellResponse);
-  //   KubernetesCommandExecutor kubernetesCommandExecutor =
-  //       createExecutor(KubernetesCommandExecutor.CommandType.POD_INFO,
-  //       defaultUniverse.getUniverseDetails().getPrimaryCluster().placementInfo);
-  //   assertEquals(3, defaultUniverse.getNodes().size());
-  //   kubernetesCommandExecutor.run();
-  //   verify(kubernetesManager, times(1)).getPodInfos(config, nodePrefix, nodePrefix);
-  //   defaultUniverse = Universe.get(defaultUniverse.universeUUID);
-  //   ImmutableList<String> pods = ImmutableList.of(
-  //       "yb-master-0",
-  //       "yb-master-1",
-  //       "yb-master-2",
-  //       "yb-tserver-0",
-  //       "yb-tserver-1",
-  //       "yb-tserver-2"
-  //   );
-  //   for (String podName : pods) {
-  //     NodeDetails node = defaultUniverse.getNode(podName);
-  //     assertNotNull(node);
-  //     String serviceName = podName.contains("master") ? "yb-masters" : "yb-tservers";
-  //     assertTrue(podName.contains("master") ? node.isMaster: node.isTserver);
-  //     assertEquals(node.cloudInfo.private_ip, String.format("%s.%s.%s.%s", podName,
-  //         serviceName, nodePrefix, "svc.cluster.local"));
-  //   }
-  // }
-
   @Test
   public void testPodInfo() {
     testPodInfoBase(false);
@@ -763,9 +710,6 @@ public class KubernetesCommandExecutorTest extends SubTaskBaseTest {
       azConfig.put("KUBECONFIG", "test-kc");
       azConfig.put("KUBENAMESPACE", namespace);
     }
-
-    // TODO(bhavin192): I think it is okay to modify this? As it is
-    // different for each test case?
     defaultAZ.setConfig(azConfig);
 
     ShellResponse shellResponse = new ShellResponse();
@@ -824,96 +768,6 @@ public class KubernetesCommandExecutorTest extends SubTaskBaseTest {
     testPodInfoMultiAZBase(true);
   }
 
-  // TODO(bhavin192): remove this.
-  // @Test
-  // public void testPodInfoMultiAZWithNamespace() {
-  //   String nodePrefix1 = String.format("%s-%s", defaultUniverse.getUniverseDetails().nodePrefix,
-  //                                      "az-1");
-  //   String nodePrefix2 = String.format("%s-%s", defaultUniverse.getUniverseDetails().nodePrefix,
-  //                                      "az-2");
-  //   String nodePrefix3 = String.format("%s-%s", defaultUniverse.getUniverseDetails().nodePrefix,
-  //                                      "az-3");
-
-  //   String ns1 = "demo-ns-1";
-  //   String ns2 = "demo-ns-2";
-
-  //   String podInfosMessage =
-  //       "{\"items\": [{\"status\": {\"startTime\": \"1234\", \"phase\": \"Running\"," +
-  //           " \"podIP\": \"123.456.78.90\"}, \"spec\": {\"hostname\": \"yb-master-0\"}," +
-  //           " \"metadata\": {\"namespace\": \"%s\"}}," +
-  //       "{\"status\": {\"startTime\": \"1234\", \"phase\": \"Running\", " +
-  //           "\"podIP\": \"123.456.78.91\"}, \"spec\": {\"hostname\": \"yb-tserver-0\"}," +
-  //           " \"metadata\": {\"namespace\": \"%s\"}}]}";
-
-  //   ShellResponse shellResponse1 =
-  //       ShellResponse.create(0, String.format(podInfosMessage, ns1, ns1));
-  //   when(kubernetesManager.getPodInfos(any(), any(), eq(ns1))).thenReturn(shellResponse1);
-  //   System.out.println("doomed: " + shellResponse1.message);
-
-  //   ShellResponse shellResponse2 =
-  //       ShellResponse.create(0, String.format(podInfosMessage, ns2, ns2));
-  //   when(kubernetesManager.getPodInfos(any(), any(), eq(ns2))).thenReturn(shellResponse2);
-
-  //   ShellResponse shellResponse3 = 
-  //       ShellResponse.create(0, String.format(podInfosMessage, nodePrefix3, nodePrefix3));
-  //   when(kubernetesManager.getPodInfos(any(), any(), eq(nodePrefix3))).thenReturn(shellResponse3);
-
-  //   Region r1 = Region.create(defaultProvider, "region-1", "region-1", "yb-image-1");
-  //   Region r2 = Region.create(defaultProvider, "region-2", "region-2", "yb-image-1");
-  //   AvailabilityZone az1 = AvailabilityZone.create(r1, "az-" + 1, "az-" + 1, "subnet-" + 1);
-  //   AvailabilityZone az2 = AvailabilityZone.create(r1, "az-" + 2, "az-" + 2, "subnet-" + 2);
-  //   AvailabilityZone az3 = AvailabilityZone.create(r2, "az-" + 3, "az-" + 3, "subnet-" + 3);
-  //   PlacementInfo pi = new PlacementInfo();
-  //   PlacementInfoUtil.addPlacementZone(az1.uuid, pi);
-  //   PlacementInfoUtil.addPlacementZone(az2.uuid, pi);
-  //   PlacementInfoUtil.addPlacementZone(az3.uuid, pi);
-
-  //   Map<String, String> config = new HashMap();
-  //   config.put("KUBENAMESPACE", ns1);
-  //   az1.setConfig(config);
-  //   config.put("KUBENAMESPACE", ns2);
-  //   az2.setConfig(config);    
-
-  //   KubernetesCommandExecutor kubernetesCommandExecutor =
-  //       createExecutor(KubernetesCommandExecutor.CommandType.POD_INFO, pi);
-  //   kubernetesCommandExecutor.run();
-    
-  //   verify(kubernetesManager, times(1)).getPodInfos(config, nodePrefix1, ns1);
-  //   verify(kubernetesManager, times(1)).getPodInfos(config, nodePrefix2, ns2);
-  //   verify(kubernetesManager, times(1)).getPodInfos(config, nodePrefix3, nodePrefix3);
-  //   defaultUniverse = Universe.get(defaultUniverse.universeUUID);
-
-  //   Map<String, String> podToNamespace = new HashMap();
-  //   podToNamespace.put("yb-master-0_az-1", ns1);
-  //   podToNamespace.put("yb-master-0_az-2", ns2);
-  //   podToNamespace.put("yb-master-0_az-3", nodePrefix3);
-  //   podToNamespace.put("yb-tserver-0_az-1", ns1);
-  //   podToNamespace.put("yb-tserver-0_az-2", ns2);
-  //   podToNamespace.put("yb-tserver-0_az-3", nodePrefix3);
-
-  //   Map<String, String> azToRegion = new HashMap();
-  //   azToRegion.put("az-1", "region-1");
-  //   azToRegion.put("az-2", "region-1");
-  //   azToRegion.put("az-3", "region-2");
-
-  //   for (Map.Entry<String, String> entry : podToNamespace.entrySet()) {
-  //     String podName = entry.getKey();
-  //     String namespace = entry.getValue();
-  //     NodeDetails node = defaultUniverse.getNode(podName);
-  //     assertNotNull(node);
-  //     String serviceName = podName.contains("master") ? "yb-masters" : "yb-tservers";
-
-  //     assertTrue(podName.contains("master") ? node.isMaster: node.isTserver);
-
-  //     String az = podName.split("_")[1];
-  //     String podK8sName = podName.split("_")[0];
-  //     assertEquals(node.cloudInfo.private_ip, String.format("%s.%s.%s.%s", podK8sName, serviceName,
-  //         namespace, "svc.cluster.local"));
-  //     assertEquals(node.cloudInfo.az, az);
-  //     assertEquals(node.cloudInfo.region, azToRegion.get(az));
-  //   }
-  // }
-
   private void testPodInfoMultiAZBase(boolean setNamespace) {
     Region r1 = Region.create(defaultProvider, "region-1", "region-1", "yb-image-1");
     Region r2 = Region.create(defaultProvider, "region-2", "region-2", "yb-image-1");
@@ -971,10 +825,6 @@ public class KubernetesCommandExecutorTest extends SubTaskBaseTest {
     ShellResponse shellResponse3 =
         ShellResponse.create(0, String.format(podInfosMessage, ns3));
     when(kubernetesManager.getPodInfos(any(), eq(nodePrefix3), eq(ns3))).thenReturn(shellResponse3);
-
-      // TODO(bhavin192): Why does the getPodInfos returns directly
-      // null when the mocked functions don't match? A mystery to
-      // solve here.
 
     KubernetesCommandExecutor kubernetesCommandExecutor =
         createExecutor(KubernetesCommandExecutor.CommandType.POD_INFO, pi);

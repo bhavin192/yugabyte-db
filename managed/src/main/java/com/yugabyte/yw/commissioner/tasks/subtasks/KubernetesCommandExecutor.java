@@ -331,10 +331,6 @@ public class KubernetesCommandExecutor extends UniverseTaskBase {
         pod.put("region_name", regionName);
         // Pod name is differentiated by the zone of deployment appended to
         // the hostname of the pod in case of multi-az.
-
-        // TODO(bhavin192): can be simplified if we have pod names
-        // with release name in them. But it will still be required to
-        // be kept for backwards compatibility.
         String podName = isMultiAz ?
             String.format("%s_%s", podSpec.path("hostname").asText(), azName) :
             podSpec.path("hostname").asText();
@@ -358,13 +354,6 @@ public class KubernetesCommandExecutor extends UniverseTaskBase {
         NodeDetails nodeDetail = defaultNode.clone();
         Map.Entry<String, JsonNode> pod = iter.next();
         String hostname = pod.getKey();
-
-        // The namespace of the deployment in multi-az is constructed by appending
-        // the zone to the universe name.
-        // String namespace = isMultiAz ?
-        //     PlacementInfoUtil.getKubernetesNamespace(taskParams().nodePrefix, hostname.split("_")[1]) :
-        //     taskParams().nodePrefix;
-
         JsonNode podVals = pod.getValue();
         String namespace = podVals.get("namespace").asText();
         UUID azUUID = UUID.fromString(podVals.get("az_uuid").asText());
