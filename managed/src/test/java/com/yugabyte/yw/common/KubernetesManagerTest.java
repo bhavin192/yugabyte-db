@@ -208,11 +208,11 @@ public class KubernetesManagerTest extends FakeDBApplication {
 
   @Test
   public void getServices() {
-    kubernetesManager.getServices(configProvider, "demo-universe");
+    kubernetesManager.getServices(configProvider, "demo-universe", "demo-ns");
     Mockito.verify(shellProcessHandler, times(1))
         .run(command.capture(), (Map<String, String>) config.capture(), description.capture());
     assertEquals(ImmutableList.of("kubectl", "get", "services",
-        "--namespace", "demo-universe", "-o", "json", "-l", "release=" + "demo-universe"),
+        "--namespace", "demo-ns", "-o", "json", "-l", "release=" + "demo-universe"),
         command.getValue());
   }
 }

@@ -272,18 +272,23 @@ public class KubernetesCommandExecutor extends UniverseTaskBase {
       String regionName = AvailabilityZone.get(azUUID).region.code;
       Map<String, String> config = entry.getValue();
 
-      // TODO(bhavin192): should be updated? Used by the Helmlegacy
-      // override.
-      String namespace = taskParams().nodePrefix;
-
+      // TODO(bhavin192): :O we seem to be iterating over all the AZs
+      // here, and still selecting services for only one AZ governed
+      // by the taskParams().nodePrefix. Is it even required to
+      // iterate in that case?
       ShellResponse svcResponse =
-          kubernetesManager.getServices(config, namespace);
+        kubernetesManager.getServices(config, taskParams().nodePrefix, taskParams().namespace);
       JsonNode svcInfos = parseShellResponseAsJson(svcResponse);
 
       for (JsonNode svcInfo: svcInfos.path("items")) {
         JsonNode serviceMetadata =  svcInfo.path("metadata");
         JsonNode serviceSpec = svcInfo.path("spec");
         String serviceType = serviceSpec.path("type").asText();
+        // TODO(bhavin192): this will need an update when we have
+        // multiple releases in one namespace, the generated service
+        // name will be different and not just yb-masters, yb-tservers
+        // etc. Values file will still have yb-masters, yb-tservers
+        // etc.
         serviceToIP.put(serviceMetadata.path("name").asText(),
                         serviceSpec.path("clusterIP").asText());
       }

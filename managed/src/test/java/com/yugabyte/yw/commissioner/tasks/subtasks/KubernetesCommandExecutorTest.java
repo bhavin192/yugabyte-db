@@ -1017,14 +1017,13 @@ public class KubernetesCommandExecutorTest extends SubTaskBaseTest {
   }
 
 
-  // TODO(bhavin192): work on this.
   @Test
   public void testHelmInstallLegacy() throws IOException {
     ShellResponse shellResponse = new ShellResponse();
     shellResponse.message =
         "{\"items\": [{\"metadata\": {\"name\": \"test\"}, \"spec\": {\"clusterIP\": \"None\"," +
         "\"type\":\"clusterIP\"}}]}";
-    when(kubernetesManager.getServices(any(), any())).thenReturn(shellResponse);
+    when(kubernetesManager.getServices(any(), any(), any())).thenReturn(shellResponse);
     defaultUniverse.setConfig(ImmutableMap.of(Universe.HELM2_LEGACY,
                                               Universe.HelmLegacy.V2TO3.toString()));
     assertEquals(hackPlacementUUID, defaultUniverse.getUniverseDetails().getPrimaryCluster().uuid);
@@ -1045,9 +1044,9 @@ public class KubernetesCommandExecutorTest extends SubTaskBaseTest {
                                                     expectedNodePrefix.capture(),
                                                     expectedNamespace.capture(),
                                                     expectedOverrideFile.capture());
-    // TODO(bhavin192): might need an update.
     verify(kubernetesManager, times(1)).getServices(expectedConfig.capture(),
-                                                    expectedNodePrefix.capture());
+                                                    expectedNodePrefix.capture(),
+                                                    expectedNamespace.capture());
     assertEquals(config, expectedConfig.getValue());
     assertEquals(hackPlacementUUID, defaultUniverse.getUniverseDetails().getPrimaryCluster().uuid);
     assertEquals(defaultProvider.uuid, expectedProviderUUID.getValue());

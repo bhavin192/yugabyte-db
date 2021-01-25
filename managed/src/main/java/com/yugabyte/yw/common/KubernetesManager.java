@@ -79,12 +79,11 @@ public class KubernetesManager {
     return execCommand(config, commandList);
   }
 
-  // TODO(bhavin192): do we need to update this? It is being used by
-  // Helmlegacy as of now.
   public ShellResponse getServices(Map<String, String> config,
-                                                       String universePrefix) {
+                                   String universePrefix,
+                                   String namespace) {
     List<String> commandList = ImmutableList.of("kubectl",  "get", "services", "--namespace",
-        universePrefix, "-o", "json", "-l", "release=" + universePrefix);
+        namespace, "-o", "json", "-l", "release=" + universePrefix);
     System.out.println(commandList);
     return execCommand(config, commandList);
   }
