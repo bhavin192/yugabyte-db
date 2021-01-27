@@ -17,6 +17,7 @@ import com.yugabyte.yw.commissioner.tasks.UniverseDefinitionTaskBase.UniverseOpT
 import com.yugabyte.yw.commissioner.tasks.subtasks.KubernetesCommandExecutor;
 import com.yugabyte.yw.common.PlacementInfoUtil;
 import com.yugabyte.yw.forms.UniverseDefinitionTaskParams;
+import com.yugabyte.yw.models.AvailabilityZone;
 import com.yugabyte.yw.models.Provider;
 import com.yugabyte.yw.models.Region;
 import com.yugabyte.yw.models.Universe;
@@ -65,6 +66,33 @@ public class CreateKubernetesUniverse extends KubernetesTaskBase {
 
       Provider provider = Provider.get(UUID.fromString(
           taskParams().getPrimaryCluster().userIntent.provider));
+
+      // TODO(bhavin192): move this to a new function: start
+      boolean isNamespaceSet = false;
+      for (Region r : Region.getByProvider(provider.uuid)) {
+        for (AvailabilityZone az : AvailabilityZone.getAZsForRegion(r.uuid)) {
+          if (az.getConfig().containsKey("KUBENAMESPACE")) {
+            isNamespaceSet = true;
+          }
+        }
+      }
+
+      if (isNamespaceSet) {
+        for (Universe uu : Universe.getAllUuids()) {
+          Universe u = Universe.get(uu.universeUUID);
+          UUID pu = UUID.fromString(u.getUniverseDetails().getPrimaryCluster().userIntent.provider);
+          if (pu.equals(provider.uuid) && !u.universeUUID.equals(universe.universeUUID)) {
+            String msg = "Universe " + u.name + " (" + u.universeUUID +
+              ") already exists with provider " + provider.name + " (" + provider.uuid +
+              "). Only one universe can be created with providers having KUBENAMESPACE set " +
+              "in the AZ config.";
+            LOG.error(msg);
+            // throw new IllegalArgumentException("Only one universe can be created with this provider.");
+            throw new IllegalArgumentException(msg);
+          }
+        }
+      }
+      // TODO(bhavin192): move this to a new function: end
 
       KubernetesPlacement placement = new KubernetesPlacement(pi);
 
