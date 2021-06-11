@@ -192,6 +192,19 @@ public class UniverseCRUDHandler {
         taskType = TaskType.CreateKubernetesUniverse;
         universe.updateConfig(
             ImmutableMap.of(Universe.HELM2_LEGACY, Universe.HelmLegacy.V3.toString()));
+        // TODO(bhavin192): FIX ME: new naming style is enabled by
+        // default for all new versions for now.
+
+        // TODO(bhavin192): FIX ME: set the version to latest release
+        // of 2.7.x.?
+        // https://github.com/yugabyte/charts/commit/5d164cb
+        if (Util.compareYbVersions(primaryIntent.ybSoftwareVersion, "2.7.2.0-b113") >= 0) {
+          universe.updateConfig(
+              ImmutableMap.of(Universe.HELM_NAMING_STYLE, Universe.HelmNamingStyle.NEW.toString()));
+        } else {
+          universe.updateConfig(
+              ImmutableMap.of(Universe.HELM_NAMING_STYLE, Universe.HelmNamingStyle.OLD.toString()));
+        }
       } else {
         if (primaryCluster.userIntent.enableIPV6) {
           throw new YWServiceException(
@@ -883,6 +896,10 @@ public class UniverseCRUDHandler {
                 + " as it is not helm 3 compatible. "
                 + "Manually migrate the deployment to helm3 "
                 + "and then mark the universe as helm 3 compatible.");
+      }
+      if (!universeConfig.containsKey(Universe.HELM_NAMING_STYLE)) {
+        universe.updateConfig(
+            ImmutableMap.of(Universe.HELM_NAMING_STYLE, Universe.HelmNamingStyle.OLD.toString()));
       }
     }
 

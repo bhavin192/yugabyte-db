@@ -37,6 +37,8 @@ public class UpgradeKubernetesUniverse extends KubernetesTaskBase {
 
   public static class Params extends UpgradeParams {}
 
+  boolean newNamingStyle = false;
+
   @Override
   protected UpgradeParams taskParams() {
     return (UpgradeParams) taskParams;
@@ -68,6 +70,9 @@ public class UpgradeKubernetesUniverse extends KubernetesTaskBase {
               "Cluster is already on yugabyte software version: " + taskParams().ybSoftwareVersion);
         }
       }
+
+      // TODO(bhavin192): FIX ME: should this be a taskParam?
+      newNamingStyle = universe.usesHelmNewNamingStyle();
 
       switch (taskParams().taskType) {
         case Software:
@@ -156,7 +161,8 @@ public class UpgradeKubernetesUniverse extends KubernetesTaskBase {
             placement.masters,
             taskParams().nodePrefix,
             provider,
-            universeDetails.communicationPorts.masterRpcPort);
+            universeDetails.communicationPorts.masterRpcPort,
+            newNamingStyle);
 
     if (masterChanged) {
       userIntent.masterGFlags = taskParams().masterGFlags;
@@ -168,7 +174,8 @@ public class UpgradeKubernetesUniverse extends KubernetesTaskBase {
           version,
           taskParams().sleepAfterMasterRestartMillis,
           masterChanged,
-          tserverChanged);
+          tserverChanged,
+          newNamingStyle);
     }
     if (tserverChanged) {
       createLoadBalancerStateChangeTask(false /*enable*/)
@@ -183,7 +190,8 @@ public class UpgradeKubernetesUniverse extends KubernetesTaskBase {
           version,
           taskParams().sleepAfterTServerRestartMillis,
           false /* master change is false since it has already been upgraded.*/,
-          tserverChanged);
+          tserverChanged,
+          newNamingStyle);
 
       createLoadBalancerStateChangeTask(true /*enable*/).setSubTaskGroupType(getTaskSubGroupType());
     }
