@@ -62,7 +62,8 @@ public class CreateKubernetesUniverse extends KubernetesTaskBase {
 
       KubernetesPlacement placement = new KubernetesPlacement(pi);
 
-      // TODO(bhavin192): FIX ME: should this be a taskParam?
+      // TODO(bhavin192): REVIEW: should this be a taskParam? I
+      // personally don't think so.
       boolean newNamingStyle = universe.usesHelmNewNamingStyle();
 
       String masterAddresses =

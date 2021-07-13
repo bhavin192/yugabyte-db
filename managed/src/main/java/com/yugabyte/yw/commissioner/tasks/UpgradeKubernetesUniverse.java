@@ -71,7 +71,8 @@ public class UpgradeKubernetesUniverse extends KubernetesTaskBase {
         }
       }
 
-      // TODO(bhavin192): FIX ME: should this be a taskParam?
+      // TODO(bhavin192): REVIEW: should this be a taskParam? I
+      // personally don't think so.
       newNamingStyle = universe.usesHelmNewNamingStyle();
 
       switch (taskParams().taskType) {

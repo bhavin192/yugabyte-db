@@ -192,12 +192,13 @@ public class UniverseCRUDHandler {
         taskType = TaskType.CreateKubernetesUniverse;
         universe.updateConfig(
             ImmutableMap.of(Universe.HELM2_LEGACY, Universe.HelmLegacy.V3.toString()));
-        // TODO(bhavin192): FIX ME: new naming style is enabled by
+        // TODO(bhavin192): REVIEW: new naming style is enabled by
         // default for all new versions for now.
 
-        // TODO(bhavin192): FIX ME: set the version to latest release
-        // of 2.7.x.?
-        // https://github.com/yugabyte/charts/commit/5d164cb
+        // TODO(bhavin192): REVIEW: set the version to latest release
+        // of 2.7.x.?  The change
+        // https://github.com/yugabyte/charts/commit/5d164cb seems to
+        // be available in b113.
         if (Util.compareYbVersions(primaryIntent.ybSoftwareVersion, "2.7.2.0-b113") >= 0) {
           universe.updateConfig(
               ImmutableMap.of(Universe.HELM_NAMING_STYLE, Universe.HelmNamingStyle.NEW.toString()));

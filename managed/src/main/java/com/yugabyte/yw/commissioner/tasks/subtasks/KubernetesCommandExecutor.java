@@ -745,7 +745,7 @@ public class KubernetesCommandExecutor extends UniverseTaskBase {
       overrides.put("oldNamingStyle", false);
     }
 
-    // TODO(bhavin192): FIX ME: do we want to have fullnameOverride
+    // TODO(bhavin192): REVIEW: do we want to have fullnameOverride
     // for Helm?  That way we can avoid the -yugabyte from name. For
     // example, currently the resource names i.e. pods, services etc
     // are generated as yb-dev-my-universe-yugabyte-yb-master-0, we
